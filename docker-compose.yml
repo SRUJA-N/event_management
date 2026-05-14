@@ -32,9 +32,10 @@ services:
       MYSQL_USER: bit_user
       MYSQL_PASSWORD: bit_pass
       MYSQL_HOST: db
-      DJANGO_ALLOWED_HOSTS: localhost,127.0.0.1,web,0.0.0.0,testserver
+      DJANGO_ALLOWED_HOSTS: "localhost,127.0.0.1,web,0.0.0.0,testserver,albatross-ambiguity-removed.ngrok-free.dev"
 
       DJANGO_DEBUG: "1"
+      DJANGO_CSRF_TRUSTED_ORIGINS: "https://albatross-ambiguity-removed.ngrok-free.dev"
     depends_on:
       db:
         condition: service_healthy
