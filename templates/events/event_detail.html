@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% block title %}{{ event.title }} · CSE-ICB{% endblock %}
+{% block content %}
+<div class="flex flex-wrap items-start justify-between gap-4">
+  <div>
+    <h1 class="text-3xl font-semibold text-white">{{ event.title }}</h1>
+    <p class="mt-2 text-slate-400">{{ event.event_date }} · {{ event.get_event_type_display }} · {{ event.venue }}</p>
+  </div>
+  <div class="flex flex-wrap gap-2">
+    <span class="text-xs px-3 py-2 rounded-xl border
+      {% if event.status == 'APPROVED' %}border-emerald-500/40 text-emerald-200
+      {% elif event.status == 'PENDING' %}border-amber-500/40 text-amber-200
+      {% else %}border-rose-500/40 text-rose-200{% endif %}">{{ event.status }}</span>
+    {% if event.can_issue_qr %}
+      <a class="text-xs px-3 py-2 rounded-xl bg-blue-500/15 border border-blue-500/30 text-blue-200" href="{% url 'events:event_qr' event.pk %}">Download QR</a>
+    {% endif %}
+    {% if user.role != 'VIEWER' and not event.is_locked %}
+      <a class="text-xs px-3 py-2 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-200" href="{% url 'events:event_edit' event.pk %}">Edit draft</a>
+    {% endif %}
+  </div>
+</div>
+
+<div class="mt-8 grid md:grid-cols-3 gap-6">
+  <div class="glass rounded-2xl p-6 border border-slate-700/60 md:col-span-2">
+    <h2 class="text-lg font-semibold text-white">Budget</h2>
+    <div class="mt-4 grid sm:grid-cols-2 gap-4 text-sm">
+      <div class="rounded-xl border border-slate-800/80 p-4">
+        <div class="text-slate-400">College fund</div>
+        <div class="mt-1 text-2xl font-mono text-emerald-200">₹ {{ event.college_fund }}</div>
+      </div>
+      <div class="rounded-xl border border-slate-800/80 p-4">
+        <div class="text-slate-400">Sponsorship</div>
+        <div class="mt-1 text-2xl font-mono text-blue-200">₹ {{ event.sponsorship }}</div>
+      </div>
+    </div>
+    <p class="mt-4 text-xs text-slate-500">{% if event.is_locked %}Approved events cannot change budget allocations.{% else %}Draft budgets can be edited until approval.{% endif %}</p>
+    {% if event.status == 'APPROVED' %}
+      <p class="mt-3 text-xs text-slate-400">Public scan route: <code class="text-emerald-300">/scan/{{ event.id }}/?t={{ event.attendance_token }}</code></p>
+    {% endif %}
+    <div class="mt-6 text-sm text-slate-300 whitespace-pre-line">{{ event.description }}</div>
+  </div>
+  <div class="glass rounded-2xl p-6 border border-slate-700/60">
+    <h2 class="text-lg font-semibold text-white">Workflow</h2>
+    <div class="mt-3 text-sm text-slate-400 space-y-2">
+      <div>Creator: <span class="text-slate-200">{{ event.created_by.username }}</span></div>
+      {% if event.approved_by %}
+        <div>Approver: <span class="text-slate-200">{{ event.approved_by.username }}</span></div>
+      {% endif %}
+      <div>Attendance rows: <span class="text-slate-200">{{ attendance_count }}</span></div>
+    </div>
+    {% if event.status == 'REJECTED' %}
+      <div class="mt-4 text-sm text-rose-200 border border-rose-500/30 rounded-xl p-3">{{ event.rejected_reason }}</div>
+    {% endif %}
+  </div>
+</div>
+
+{% if user.role != 'VIEWER' %}
+<div class="mt-8 glass rounded-2xl p-6 border border-slate-700/60">
+  <h2 class="text-lg font-semibold text-white">Certificates (attended students)</h2>
+  <p class="mt-2 text-sm text-slate-400">PDFs are generated with ReportLab and a placeholder HOD signature image.</p>
+  <div class="mt-4 space-y-2 text-sm">
+    {% for row in event.attendance_rows.all %}
+      <div class="flex items-center justify-between gap-3 border-b border-slate-800/80 py-2">
+        <div class="text-slate-200">{{ row.student.usn }} · {{ row.student.name }}</div>
+        <a class="text-blue-300 hover:text-blue-200" href="{% url 'events:certificate' event.pk row.student.usn %}">Download PDF</a>
+      </div>
+    {% empty %}
+      <div class="text-slate-500">No attendance yet.</div>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+{% endblock %}

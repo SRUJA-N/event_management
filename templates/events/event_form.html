@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}{{ title }} · CSE-ICB{% endblock %}
+{% block content %}
+<h1 class="text-3xl font-semibold text-white">{{ title }}</h1>
+<p class="mt-2 text-slate-400">Faculty and coordinators submit drafts as <span class="text-amber-200">PENDING</span>. Budget locks after approval.</p>
+<form method="post" class="mt-8 glass rounded-2xl p-6 border border-slate-700/60 space-y-4 max-w-3xl">
+  {% csrf_token %}
+  {% for field in form %}
+    <div>
+      <label class="block text-xs uppercase tracking-wide text-slate-400 mb-1">{{ field.label }}</label>
+      {{ field }}
+      {% if field.help_text %}<div class="text-xs text-slate-500 mt-1">{{ field.help_text }}</div>{% endif %}
+      {% if field.errors %}<div class="text-xs text-rose-300 mt-1">{{ field.errors|striptags }}</div>{% endif %}
+    </div>
+  {% endfor %}
+  <button class="rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-semibold px-5 py-2">Save</button>
+</form>
+{% endblock %}

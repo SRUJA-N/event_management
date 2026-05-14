@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}Events · CSE-ICB{% endblock %}
+{% block content %}
+<div class="flex items-center justify-between gap-4 flex-wrap">
+  <h1 class="text-3xl font-semibold text-white">Events</h1>
+  {% if user.role == 'ADMIN' or user.role == 'FACULTY' or user.role == 'STUDENT_COORDINATOR' %}
+    <a href="{% url 'events:event_create' %}" class="rounded-xl bg-emerald-500/15 border border-emerald-500/30 px-4 py-2 text-emerald-200 hover:bg-emerald-500/25">New event</a>
+  {% endif %}
+</div>
+<div class="mt-8 space-y-3">
+  {% for e in events %}
+    <a href="{% url 'events:event_detail' e.pk %}" class="block glass rounded-2xl p-5 border border-slate-700/60 hover:border-emerald-500/25">
+      <div class="flex items-start justify-between gap-4">
+        <div>
+          <div class="text-lg text-white font-medium">{{ e.title }}</div>
+          <div class="mt-1 text-sm text-slate-400">{{ e.event_date }} · {{ e.get_event_type_display }} · {{ e.venue }}</div>
+        </div>
+        <span class="text-xs px-2 py-1 rounded-lg border
+          {% if e.status == 'APPROVED' %}border-emerald-500/40 text-emerald-200
+          {% elif e.status == 'PENDING' %}border-amber-500/40 text-amber-200
+          {% else %}border-rose-500/40 text-rose-200{% endif %}">{{ e.status }}</span>
+      </div>
+    </a>
+  {% empty %}
+    <div class="glass rounded-2xl p-8 border border-slate-700/60 text-slate-400">No events available.</div>
+  {% endfor %}
+</div>
+{% endblock %}

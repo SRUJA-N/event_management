@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}Budget Predictor · CSE-ICB{% endblock %}
+{% block content %}
+<h1 class="text-3xl font-semibold text-white">ML budget predictor</h1>
+<p class="mt-2 text-slate-400">Linear regression trained on approved departmental events (scikit-learn). Model form: y = β₀ + β₁·participants + β₂·type_code (venue steers a deterministic local prior when data is sparse).</p>
+
+<div class="mt-8 grid lg:grid-cols-2 gap-6">
+  <div class="glass rounded-2xl p-6 border border-slate-700/60">
+    <h2 class="text-lg font-semibold text-white">Scenario</h2>
+    <form method="post" class="mt-4 space-y-4">
+      {% csrf_token %}
+      {% for field in form %}
+        <div>
+          <label class="block text-xs uppercase tracking-wide text-slate-400 mb-1">{{ field.label }}</label>
+          {{ field }}
+          {% if field.errors %}<div class="text-xs text-rose-300 mt-1">{{ field.errors|striptags }}</div>{% endif %}
+        </div>
+      {% endfor %}
+      <button class="rounded-xl bg-blue-500 hover:bg-blue-400 text-slate-950 font-semibold px-5 py-2">Predict</button>
+    </form>
+  </div>
+  <div class="glass rounded-2xl p-6 border border-slate-700/60">
+    <h2 class="text-lg font-semibold text-white">Output</h2>
+    {% if prediction %}
+      <div class="mt-4 space-y-3 text-sm">
+        <div class="flex justify-between border-b border-slate-800/80 pb-2">
+          <span class="text-slate-400">Predicted total need</span>
+          <span class="text-emerald-300 font-mono">₹ {{ prediction.cost }}</span>
+        </div>
+        <div class="text-xs text-slate-500">Coefficients</div>
+        <div class="font-mono text-xs text-slate-300 space-y-1">
+          <div>β₀ (intercept): {{ prediction.beta0 }}</div>
+          <div>β₁ (participants): {{ prediction.beta1 }}</div>
+          <div>β₂ (type code): {{ prediction.beta2 }}</div>
+        </div>
+      </div>
+    {% else %}
+      <p class="mt-4 text-sm text-slate-500">Submit the form to generate a local prediction (no external APIs).</p>
+    {% endif %}
+    <p class="mt-6 text-xs text-slate-500">Training status: {% if has_model %}<span class="text-emerald-300">model loaded from historical rows</span>{% else %}<span class="text-amber-300">fallback coefficients until enough approved events exist</span>{% endif %}</p>
+  </div>
+</div>
+{% endblock %}

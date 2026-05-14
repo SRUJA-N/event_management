@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}Login · CSE-ICB{% endblock %}
+{% block content %}
+<div class="max-w-md mx-auto glass rounded-2xl p-8 shadow-glass border border-slate-700/60">
+  <h1 class="text-2xl font-semibold text-white">Secure department login</h1>
+  <p class="mt-2 text-sm text-slate-400">Use the seeded demo accounts on localhost.</p>
+  <ul class="mt-4 text-xs text-slate-400 space-y-1">
+    <li><span class="text-emerald-300">admin_demo</span> / demo12345</li>
+    <li><span class="text-emerald-300">faculty_demo</span> / demo12345</li>
+    <li><span class="text-emerald-300">coordinator_demo</span> / demo12345</li>
+    <li><span class="text-emerald-300">viewer_demo</span> / demo12345</li>
+  </ul>
+  <form method="post" class="mt-6 space-y-4">
+    {% csrf_token %}
+    {% for field in form %}
+      <div>
+        {% if field.errors %}<div class="text-rose-300 text-xs mb-1">{{ field.errors|striptags }}</div>{% endif %}
+        {{ field }}
+      </div>
+    {% endfor %}
+    <button class="w-full rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-semibold py-2">Enter console</button>
+  </form>
+</div>
+{% endblock %}

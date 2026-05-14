@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}Scan · {{ event.title }}{% endblock %}
+{% block content %}
+<div class="max-w-lg mx-auto glass rounded-2xl p-8 border border-slate-700/60">
+  <h1 class="text-2xl font-semibold text-white">Attendance registration</h1>
+  <p class="mt-2 text-sm text-slate-400">{{ event.title }} · {{ event.event_date }}</p>
+  <p class="mt-3 text-xs text-slate-500">USN is validated against the <code class="text-emerald-300">cse_icb_students</code> table using raw SQL before insert.</p>
+  <form method="post" class="mt-6 space-y-4">
+    {% csrf_token %}
+    <input type="hidden" name="t" value="{{ token }}" />
+    {% for field in form %}
+      <div>
+        <label class="block text-xs uppercase tracking-wide text-slate-400 mb-1">{{ field.label }}</label>
+        {{ field }}
+        {% if field.errors %}<div class="text-xs text-rose-300 mt-1">{{ field.errors|striptags }}</div>{% endif %}
+      </div>
+    {% endfor %}
+    <button class="w-full rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-semibold py-2">Register attendance</button>
+  </form>
+</div>
+{% endblock %}

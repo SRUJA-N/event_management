@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+{% block title %}Dashboard · CSE-ICB{% endblock %}
+{% block content %}
+<div class="flex items-end justify-between gap-4 flex-wrap">
+  <div>
+    <h1 class="text-3xl font-semibold text-white">Analytics cockpit</h1>
+    <p class="mt-2 text-slate-400">Budget variance is computed with raw SQL via <code class="text-emerald-300">connection.cursor()</code>.</p>
+  </div>
+  {% if user.role == 'ADMIN' or user.role == 'FACULTY' %}
+    {% if pending_count %}
+    <a href="{% url 'events_admin_approvals' %}" class="rounded-xl bg-blue-500/15 border border-blue-500/30 px-4 py-2 text-blue-200 hover:bg-blue-500/25">
+      {{ pending_count }} pending approvals
+    </a>
+    {% endif %}
+  {% endif %}
+</div>
+
+<div class="mt-8 grid lg:grid-cols-3 gap-6">
+  <div class="lg:col-span-2 glass rounded-2xl p-6 border border-slate-700/60">
+    <div class="flex items-center justify-between">
+      <h2 class="text-lg font-semibold text-white">College fund vs sponsorship</h2>
+      <span class="text-xs text-slate-400">Approved events</span>
+    </div>
+    <canvas id="budgetChart" height="120" class="mt-4"></canvas>
+  </div>
+  <div class="glass rounded-2xl p-6 border border-slate-700/60">
+    <h2 class="text-lg font-semibold text-white">Totals</h2>
+    <div class="mt-4 space-y-3 text-sm">
+      <div class="flex justify-between border-b border-slate-800/80 pb-2">
+        <span class="text-slate-400">College fund</span>
+        <span class="text-emerald-300 font-mono">₹ {{ totals.college|floatformat:0 }}</span>
+      </div>
+      <div class="flex justify-between border-b border-slate-800/80 pb-2">
+        <span class="text-slate-400">Sponsorship</span>
+        <span class="text-blue-300 font-mono">₹ {{ totals.sponsor|floatformat:0 }}</span>
+      </div>
+      <div class="text-xs text-slate-500">Variance % is projected in SQL for audit-friendly exports.</div>
+      <div class="text-xs text-slate-500 mt-2">ML model status:
+        {% if has_model %}<span class="text-emerald-300">trained</span>{% else %}<span class="text-amber-300">needs more approved events</span>{% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="mt-8 glass rounded-2xl p-6 border border-slate-700/60 overflow-x-auto">
+  <h2 class="text-lg font-semibold text-white mb-4">Latest variance rows</h2>
+  <table class="min-w-full text-sm">
+    <thead class="text-left text-slate-400 border-b border-slate-800/80">
+      <tr>
+        <th class="py-2 pr-4">Event</th>
+        <th class="py-2 pr-4">Date</th>
+        <th class="py-2 pr-4">College</th>
+        <th class="py-2 pr-4">Sponsor</th>
+        <th class="py-2 pr-4">Variance %</th>
+      </tr>
+    </thead>
+    <tbody class="divide-y divide-slate-800/80">
+      {% for row in variance_rows %}
+        <tr>
+          <td class="py-2 pr-4 text-slate-200">{{ row.title }}</td>
+          <td class="py-2 pr-4 text-slate-400">{{ row.event_date }}</td>
+          <td class="py-2 pr-4 font-mono text-emerald-200">₹ {{ row.college_fund|floatformat:0 }}</td>
+          <td class="py-2 pr-4 font-mono text-blue-200">₹ {{ row.sponsorship|floatformat:0 }}</td>
+          <td class="py-2 pr-4 font-mono {% if row.variance_pct > 0 %}text-emerald-300{% else %}text-amber-300{% endif %}">{{ row.variance_pct }}</td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="5" class="py-6 text-slate-500">No approved events yet.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<div class="mt-8 glass rounded-2xl p-6 border border-slate-700/60">
+  <div class="flex items-center justify-between gap-4 flex-wrap">
+    <h2 class="text-lg font-semibold text-white">Recent events</h2>
+    <a class="text-sm text-blue-300 hover:text-blue-200" href="{% url 'events:event_list' %}">View all</a>
+  </div>
+  <div class="mt-4 grid md:grid-cols-2 gap-4">
+    {% for e in events %}
+      <a href="{% url 'events:event_detail' e.pk %}" class="block rounded-xl border border-slate-800/80 bg-slate-950/30 hover:border-emerald-500/30 p-4">
+        <div class="text-white font-medium">{{ e.title }}</div>
+        <div class="mt-1 text-xs text-slate-400">{{ e.event_date }} · {{ e.get_event_type_display }}</div>
+        <div class="mt-2 text-xs">
+          <span class="px-2 py-1 rounded-lg border
+            {% if e.status == 'APPROVED' %}border-emerald-500/40 text-emerald-200
+            {% elif e.status == 'PENDING' %}border-amber-500/40 text-amber-200
+            {% else %}border-rose-500/40 text-rose-200{% endif %}">{{ e.status }}</span>
+        </div>
+      </a>
+    {% empty %}
+      <div class="text-slate-500 text-sm">No events visible for your role.</div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_head %}
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const payload = {{ variance_rows_json|safe }};
+    if (!payload || payload.length === 0) return;
+    const labels = payload.map(r => (r.title.length > 28 ? r.title.slice(0, 28) + '…' : r.title));
+    const college = payload.map(r => Number(r.college_fund || 0));
+    const sponsor = payload.map(r => Number(r.sponsorship || 0));
+    const ctx = document.getElementById('budgetChart');
+    if (!ctx) return;
+    new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels,
+        datasets: [
+          { label: 'College fund', data: college, backgroundColor: 'rgba(16,185,129,0.55)', borderColor: 'rgba(16,185,129,0.9)', borderWidth: 1 },
+          { label: 'Sponsorship', data: sponsor, backgroundColor: 'rgba(59,130,246,0.55)', borderColor: 'rgba(59,130,246,0.9)', borderWidth: 1 },
+        ]
+      },
+      options: {
+        responsive: true,
+        plugins: { legend: { labels: { color: '#cbd5e1' } } },
+        scales: {
+          x: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(148,163,184,0.12)' } },
+          y: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(148,163,184,0.12)' } }
+        }
+      }
+    });
+  });
+</script>
+{% endblock %}

@@ -1,0 +1,92 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>{% block title %}CSE-ICB Event & Budget AI{% endblock %}</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            cyber: { navy: '#0f172a', emerald: '#10b981', blue: '#3b82f6' }
+          },
+          boxShadow: {
+            glass: '0 10px 40px rgba(15, 23, 42, 0.55)'
+          }
+        }
+      }
+    };
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <style>
+    body { background: radial-gradient(1200px 600px at 20% -10%, rgba(59,130,246,0.25), transparent 60%),
+                      radial-gradient(900px 500px at 90% 10%, rgba(16,185,129,0.18), transparent 55%),
+                      #0f172a; }
+    .glass { background: rgba(15, 23, 42, 0.55); border: 1px solid rgba(148, 163, 184, 0.18); backdrop-filter: blur(14px); }
+    .cyber-input { width:100%; border-radius:0.75rem; border:1px solid rgba(148,163,184,0.25);
+      background: rgba(2,6,23,0.55); color:#e2e8f0; padding:0.65rem 0.85rem; outline:none; }
+    .cyber-input:focus { border-color: rgba(16,185,129,0.65); box-shadow: 0 0 0 3px rgba(16,185,129,0.15); }
+  </style>
+  {% block extra_head %}{% endblock %}
+</head>
+<body class="h-full text-slate-100">
+  <div class="min-h-full flex">
+    <aside class="w-72 shrink-0 border-r border-slate-800/80 glass hidden md:flex md:flex-col">
+      <div class="p-6 border-b border-slate-800/80">
+        <div class="text-xs uppercase tracking-[0.25em] text-emerald-300/90">BIT · CSE-ICB</div>
+        <div class="mt-2 text-lg font-semibold text-white">Event &amp; Budget AI</div>
+        <div class="mt-2 text-xs text-slate-400">Cyber‑industrial console</div>
+      </div>
+      <nav class="p-4 space-y-2 flex-1">
+        <a class="block rounded-xl px-3 py-2 hover:bg-white/5 border border-transparent hover:border-slate-700/60" href="{% url 'events:dashboard' %}">Dashboard</a>
+        <a class="block rounded-xl px-3 py-2 hover:bg-white/5 border border-transparent hover:border-slate-700/60" href="{% url 'events:event_list' %}">Events</a>
+        {% if user.is_authenticated %}
+          {% if user.role == 'ADMIN' or user.role == 'FACULTY' or user.role == 'STUDENT_COORDINATOR' %}
+            <a class="block rounded-xl px-3 py-2 hover:bg-white/5 border border-transparent hover:border-slate-700/60" href="{% url 'events:event_create' %}">Create Event</a>
+          {% endif %}
+          {% if user.role == 'ADMIN' or user.role == 'FACULTY' %}
+            <a class="block rounded-xl px-3 py-2 hover:bg-white/5 border border-transparent hover:border-slate-700/60" href="{% url 'events_admin_approvals' %}">Approvals</a>
+          {% endif %}
+          <a class="block rounded-xl px-3 py-2 hover:bg-white/5 border border-transparent hover:border-slate-700/60" href="{% url 'events:predictor' %}">Budget Predictor</a>
+        {% endif %}
+      </nav>
+      <div class="p-4 border-t border-slate-800/80 text-xs text-slate-400">
+        {% if user.is_authenticated %}
+          <div class="mb-2"><span class="text-slate-300">{{ user.username }}</span> · {{ user.role }}</div>
+          <form method="post" action="{% url 'accounts:logout' %}">
+            {% csrf_token %}
+            <button class="w-full rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 px-3 py-2 text-emerald-200">Logout</button>
+          </form>
+        {% else %}
+          <a class="block text-center rounded-xl bg-blue-500/15 hover:bg-blue-500/25 border border-blue-500/30 px-3 py-2 text-blue-200" href="{% url 'accounts:login' %}">Login</a>
+        {% endif %}
+      </div>
+    </aside>
+    <main class="flex-1">
+      <div class="md:hidden glass border-b border-slate-800/80 px-4 py-3 flex items-center justify-between">
+        <div class="font-semibold">CSE-ICB</div>
+        {% if user.is_authenticated %}
+          <form method="post" action="{% url 'accounts:logout' %}">{% csrf_token %}
+            <button class="text-sm text-emerald-300">Logout</button>
+          </form>
+        {% else %}
+          <a class="text-sm text-blue-300" href="{% url 'accounts:login' %}">Login</a>
+        {% endif %}
+      </div>
+      <div class="max-w-6xl mx-auto px-4 py-8">
+        {% if messages %}
+          <div class="space-y-2 mb-6">
+            {% for message in messages %}
+              <div class="glass rounded-xl px-4 py-3 text-sm border border-slate-700/60">{{ message }}</div>
+            {% endfor %}
+          </div>
+        {% endif %}
+        {% block content %}{% endblock %}
+      </div>
+    </main>
+  </div>
+</body>
+</html>
