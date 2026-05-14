@@ -1,6 +1,8 @@
-#!/bin/sh
+#!/bin/bash
 set -e
 cd /app
+
+
 
 python <<'PY'
 import os

@@ -21,7 +21,8 @@ services:
   web:
     build: .
     restart: unless-stopped
-    command: ["sh", "/app/entrypoint.sh"]
+    command: ["python", "manage.py", "runserver", "0.0.0.0:8000"]
+
     volumes:
       - .:/app
     ports:
@@ -31,7 +32,8 @@ services:
       MYSQL_USER: bit_user
       MYSQL_PASSWORD: bit_pass
       MYSQL_HOST: db
-      DJANGO_ALLOWED_HOSTS: localhost,127.0.0.1,web,0.0.0.0
+      DJANGO_ALLOWED_HOSTS: localhost,127.0.0.1,web,0.0.0.0,testserver
+
       DJANGO_DEBUG: "1"
     depends_on:
       db:
